@@ -60,28 +60,77 @@
     <p>Gracias por su compra. ¡Vuelva pronto!</p>
   </aside>
 
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const campos = [
-      "idORDENVENTAS", "CATEGORIA", "NOMBRE", "CANTIDAD",
-      "PRECIO", "TOTAL", "ESTADO", "idventas"
-    ];
+<script>
+/* ======================================================
+   CONFIGURACIÓN GENERAL
+====================================================== */
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
 
-    campos.forEach(c => {
-      const valor = params.get(c);
-      if (valor) {
+/* ======================================================
+   MODO NUEVO: URL CORTA (?id=XXXX)
+====================================================== */
+if (id) {
+  fetch("https://script.google.com/macros/s/AKfycbXXXX/exec?id=" + encodeURIComponent(id))
+    .then(r => r.json())
+    .then(data => {
+      if (!data || Object.keys(data).length === 0) return;
+
+      Object.keys(data).forEach(c => {
         const el = document.getElementById(c);
-        if (el) el.textContent = decodeURIComponent(valor);
-      }
+        if (el && data[c] !== null) {
+          el.textContent = data[c];
+        }
+      });
+
+      // Cálculos
+      const cant = parseFloat(data.CANTIDAD || 0);
+      const precio = parseFloat(data.PRECIO || 0);
+      const subtotal = cant * precio;
+
+      document.getElementById("SUBTOTAL").textContent = subtotal.toFixed(2);
+      document.getElementById("TOTAL2").textContent =
+        data.TOTAL ? Number(data.TOTAL).toFixed(2) : subtotal.toFixed(2);
     });
 
-    // Calcular subtotal si no viene directamente
-    const cant = parseFloat(params.get("CANTIDAD") || 0);
-    const precio = parseFloat(params.get("PRECIO") || 0);
-    const subtotal = cant * precio;
-    document.getElementById("SUBTOTAL").textContent = subtotal.toFixed(2);
-    document.getElementById("TOTAL2").textContent = params.get("TOTAL") || subtotal.toFixed(2);
-  </script>
+  // ⛔ salir para no ejecutar el modo viejo
+  return;
+}
+
+/* ======================================================
+   MODO VIEJO: URL LARGA (parámetros normales)
+====================================================== */
+const campos = [
+  "idORDENVENTAS",
+  "idventas",
+  "ESTADO",
+  "TOTAL",
+  "CATEGORIA",
+  "NOMBRE",
+  "CANTIDAD",
+  "PRECIO"
+];
+
+campos.forEach(c => {
+  const valor = params.get(c);
+  if (valor) {
+    const el = document.getElementById(c);
+    if (el) el.textContent = decodeURIComponent(valor);
+  }
+});
+
+// Cálculos modo viejo
+const cant = parseFloat(params.get("CANTIDAD") || 0);
+const precio = parseFloat(params.get("PRECIO") || 0);
+const subtotal = cant * precio;
+
+document.getElementById("SUBTOTAL").textContent = subtotal.toFixed(2);
+document.getElementById("TOTAL2").textContent =
+  params.get("TOTAL")
+    ? Number(params.get("TOTAL")).toFixed(2)
+    : subtotal.toFixed(2);
+</script>
+
 </body>
 </html>
 
